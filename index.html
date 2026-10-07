@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caixa de Remédios Inteligente - Painel de Controle</title>
+  <meta name="description" content="Sistema de agendamento e controle para Caixa de Remédios Inteligente 7x4 com Arduino.">
+  <link rel="stylesheet" href="style.css">
+  <!-- Ícones Phosphor para excelente legibilidade visual -->
+  <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
+</head>
+<body>
+  <!-- Cabeçalho Principal Acessível -->
+  <header class="app-header" role="banner">
+    <div class="container header-container">
+      <div class="logo-area">
+        <div class="logo-icon" aria-hidden="true">
+          <i class="ph-bold ph-pill"></i>
+        </div>
+        <div>
+          <h1 class="app-title">Caixa de Remédios Inteligente</h1>
+          <p class="app-subtitle">Painel de Alarmes e Compartimentos (Matriz 7x4)</p>
+        </div>
+      </div>
+      <div class="header-status">
+        <button class="btn-serial-connect" id="btnConectarSerial" title="Conectar Arduino diretamente pelo navegador via USB">
+          <i class="ph-bold ph-usb" id="serialIcon"></i>
+          <span id="serialBtnText">Conectar Arduino (USB)</span>
+        </button>
+        <div class="status-badge" id="arduinoStatus">
+          <span class="status-dot"></span>
+          <span id="statusText">Modo: Local / GitHub Pages</span>
+        </div>
+        <button class="btn-theme-toggle" id="themeToggle" aria-label="Alternar modo de alto contraste">
+          <i class="ph-bold ph-sun" id="themeIcon"></i>
+          <span class="theme-text" id="themeText">Alto Contraste</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Container Principal -->
+  <main class="container main-content" id="conteudo-principal">
+
+    <!-- Mensagens de Notificação / Toast -->
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- SEÇÃO 1: FORMULÁRIO DE CADASTRO -->
+    <section class="card form-card" aria-labelledby="formTitulo">
+      <div class="card-header">
+        <h2 id="formTitulo" class="card-title">
+          <i class="ph-bold ph-plus-circle" aria-hidden="true"></i>
+          Adicionar Novo Lembrete de Remédio
+        </h2>
+        <p class="card-description">
+          Preencha o nome do medicamento, marque os dias da semana e selecione o turno para programar o alarme na caixa.
+        </p>
+      </div>
+
+      <form id="formLembrete" novalidate>
+        <input type="hidden" id="editLembreteId" value="">
+
+        <!-- Campo 1: Nome do Medicamento -->
+        <div class="form-group">
+          <label for="nomeRemedio" class="form-label">
+            <span class="label-number">1</span>
+            Nome do Medicamento
+            <span class="obrigatorio" title="Campo obrigatório">*</span>
+          </label>
+          <div class="input-wrapper">
+            <i class="ph-bold ph-prescription input-icon" aria-hidden="true"></i>
+            <input 
+              type="text" 
+              id="nomeRemedio" 
+              name="nomeRemedio" 
+              class="form-control" 
+              placeholder="Ex: Losartana 50mg, Dipirona, Insulina..." 
+              required
+              autocomplete="off"
+            >
+          </div>
+          <span class="input-hint">Digite o nome do remédio ou a dosagem receitada pelo médico.</span>
+        </div>
+
+        <!-- Campo 2: Dias da Semana (Eixo X da Caixa) -->
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-number">2</span>
+            Dias da Semana (Eixo X da Caixa)
+            <span class="obrigatorio" title="Campo obrigatório">*</span>
+          </label>
+          
+          <div class="quick-select-bar">
+            <span>Seleção rápida:</span>
+            <button type="button" class="btn-chip" id="btnTodosDias">Todos os Dias</button>
+            <button type="button" class="btn-chip" id="btnDiasUteis">Segunda a Sexta</button>
+            <button type="button" class="btn-chip" id="btnFimSemana">Fim de Semana</button>
+            <button type="button" class="btn-chip btn-chip-clear" id="btnLimparDias">Limpar</button>
+          </div>
+
+          <div class="weekdays-grid" role="group" aria-label="Seleção dos dias da semana">
+            <!-- 0: Domingo -->
+            <label class="weekday-item">
+              <input type="checkbox" name="diasSemana" value="0" class="weekday-checkbox">
+              <span class="weekday-label">
+                <span class="day-short">Dom</span>
+                <span class="day-full">Domingo</span>
+              </span>
+            </label>
+
+            <!-- 1: Segunda -->
+            <label class="weekday-item">
+              <input type="checkbox" name="diasSemana" value="1" class="weekday-checkbox">
+              <span class="weekday-label">
+                <span class="day-short">Seg</span>
+                <span class="day-full">Segunda</span>
+              </span>
+            </label>
+
+            <!-- 2: Terça -->
+            <label class="weekday-item">
+              <input type="checkbox" name="diasSemana" value="2" class="weekday-checkbox">
+              <span class="weekday-label">
+                <span class="day-short">Ter</span>
+                <span class="day-full">Terça</span>
+              </span>
+            </label>
+
+            <!-- 3: Quarta -->
+            <label class="weekday-item">
+              <input type="checkbox" name="diasSemana" value="3" class="weekday-checkbox">
+              <span class="weekday-label">
+                <span class="day-short">Qua</span>
+                <span class="day-full">Quarta</span>
+              </span>
+            </label>
+
+            <!-- 4: Quinta -->
+            <label class="weekday-item">
+              <input type="checkbox" name="diasSemana" value="4" class="weekday-checkbox">
+              <span class="weekday-label">
+                <span class="day-short">Qui</span>
+                <span class="day-full">Quinta</span>
+              </span>
+            </label>
+
+            <!-- 5: Sexta -->
+            <label class="weekday-item">
+              <input type="checkbox" name="diasSemana" value="5" class="weekday-checkbox">
+              <span class="weekday-label">
+                <span class="day-short">Sex</span>
+                <span class="day-full">Sexta</span>
+              </span>
+            </label>
+
+            <!-- 6: Sábado -->
+            <label class="weekday-item">
+              <input type="checkbox" name="diasSemana" value="6" class="weekday-checkbox">
+              <span class="weekday-label">
+                <span class="day-short">Sáb</span>
+                <span class="day-full">Sábado</span>
+              </span>
+            </label>
+          </div>
+          <span class="input-hint" id="diasHint">Você pode marcar um ou mais dias.</span>
+        </div>
+
+        <!-- Campos Lado a Lado: Turno e Horário Exato -->
+        <div class="form-row">
+          
+          <!-- Campo 3: Turnos (Eixo Y da Caixa) -->
+          <div class="form-group flex-1">
+            <label class="form-label">
+              <span class="label-number">3</span>
+              Turno do Dia (Eixo Y da Caixa)
+              <span class="obrigatorio" title="Campo obrigatório">*</span>
+            </label>
+            <div class="shift-selector" role="radiogroup" aria-label="Turno da medicação">
+              <!-- Turno 0: Manhã -->
+              <label class="shift-option">
+                <input type="radio" name="turno" value="0" checked>
+                <div class="shift-card">
+                  <i class="ph-bold ph-sun-horizon shift-icon shift-morning"></i>
+                  <div>
+                    <strong class="shift-name">Manhã</strong>
+                    <span class="shift-period">Linha 1 da caixa</span>
+                  </div>
+                </div>
+              </label>
+
+              <!-- Turno 1: Tarde -->
+              <label class="shift-option">
+                <input type="radio" name="turno" value="1">
+                <div class="shift-card">
+                  <i class="ph-bold ph-sun shift-icon shift-afternoon"></i>
+                  <div>
+                    <strong class="shift-name">Tarde</strong>
+                    <span class="shift-period">Linha 2 da caixa</span>
+                  </div>
+                </div>
+              </label>
+
+              <!-- Turno 2: Noite -->
+              <label class="shift-option">
+                <input type="radio" name="turno" value="2">
+                <div class="shift-card">
+                  <i class="ph-bold ph-moon-stars shift-icon shift-evening"></i>
+                  <div>
+                    <strong class="shift-name">Noite</strong>
+                    <span class="shift-period">Linha 3 da caixa</span>
+                  </div>
+                </div>
+              </label>
+
+              <!-- Turno 3: Cama -->
+              <label class="shift-option">
+                <input type="radio" name="turno" value="3">
+                <div class="shift-card">
+                  <i class="ph-bold ph-bed shift-icon shift-bedtime"></i>
+                  <div>
+                    <strong class="shift-name">Cama</strong>
+                    <span class="shift-period">Linha 4 (Ao deitar)</span>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Campo 4: Horário Exato -->
+          <div class="form-group flex-1">
+            <label for="horarioExato" class="form-label">
+              <span class="label-number">4</span>
+              Horário Exato do Alarme
+              <span class="obrigatorio" title="Campo obrigatório">*</span>
+            </label>
+            <div class="input-wrapper">
+              <i class="ph-bold ph-clock input-icon" aria-hidden="true"></i>
+              <input 
+                type="time" 
+                id="horarioExato" 
+                name="horarioExato" 
+                class="form-control form-control-time" 
+                value="08:00" 
+                required
+              >
+            </div>
+            <span class="input-hint">Momento exato em que o alarme sonoro (Buzzer) e o LED piscarão.</span>
+
+            <!-- Campo Opcional: Observação / Instruções -->
+            <label for="observacoes" class="form-label mt-3">
+              Instruções / Cuidados (Opcional)
+            </label>
+            <div class="input-wrapper">
+              <i class="ph-bold ph-chat-text input-icon" aria-hidden="true"></i>
+              <input 
+                type="text" 
+                id="observacoes" 
+                name="observacoes" 
+                class="form-control" 
+                placeholder="Ex: Tomar com bastante água, em jejum..."
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Botões de Ação do Formulário -->
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="btnSalvar">
+            <i class="ph-bold ph-check-circle" aria-hidden="true"></i>
+            <span id="btnSalvarTexto">Salvar e Programar Caixa</span>
+          </button>
+          <button type="button" class="btn btn-secondary" id="btnCancelarEdicao" style="display: none;">
+            <i class="ph-bold ph-x-circle" aria-hidden="true"></i>
+            Cancelar Edição
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- SEÇÃO 2: VISUALIZAÇÃO INTERATIVA DA MATRIZ FÍSICA 7x4 -->
+    <section class="card matrix-card" aria-labelledby="matrixTitulo">
+      <div class="card-header flex-between">
+        <div>
+          <h2 id="matrixTitulo" class="card-title">
+            <i class="ph-bold ph-grid-four" aria-hidden="true"></i>
+            Visão Geral da Caixa Física (Matriz 7x4)
+          </h2>
+          <p class="card-description">
+            Representação visual dos 28 compartimentos. Clique em um compartimento com remédio para testar o LED e Buzzer no Arduino!
+          </p>
+        </div>
+        <button class="btn btn-outline" id="btnAtualizarMatriz" title="Recarregar dados">
+          <i class="ph-bold ph-arrows-clockwise" aria-hidden="true"></i>
+          Atualizar
+        </button>
+      </div>
+
+      <div class="matrix-wrapper">
+        <div class="matrix-table-container">
+          <table class="pillbox-matrix" role="grid" aria-label="Compartimentos da Caixa de Remédios">
+            <thead>
+              <tr>
+                <th class="matrix-corner" scope="col">Turno / Dia</th>
+                <th scope="col">Dom</th>
+                <th scope="col">Seg</th>
+                <th scope="col">Ter</th>
+                <th scope="col">Qua</th>
+                <th scope="col">Qui</th>
+                <th scope="col">Sex</th>
+                <th scope="col">Sáb</th>
+              </tr>
+            </thead>
+            <tbody id="matrixBody">
+              <!-- Renderizado dinamicamente via app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="matrix-legend">
+        <span class="legend-item"><span class="legend-box has-pill"></span> Compartimento ocupado</span>
+        <span class="legend-item"><span class="legend-box empty"></span> Compartimento vazio</span>
+        <span class="legend-item"><span class="legend-box active-alarm"></span> Compartimento em alarme / teste</span>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 3: TABELA DE GERENCIAMENTO DE LEMBRETES -->
+    <section class="card table-card" aria-labelledby="tabelaTitulo">
+      <div class="card-header flex-between">
+        <div>
+          <h2 id="tabelaTitulo" class="card-title">
+            <i class="ph-bold ph-list-dashes" aria-hidden="true"></i>
+            Lista de Remédios Agendados
+          </h2>
+          <p class="card-description">
+            Visualize todos os alarmes cadastrados, ative/desative, edite horários ou exclua agendamentos.
+          </p>
+        </div>
+        <div class="search-box">
+          <i class="ph-bold ph-magnifying-glass search-icon" aria-hidden="true"></i>
+          <input type="text" id="filtroRemedio" class="form-control form-control-sm" placeholder="Buscar medicamento...">
+        </div>
+      </div>
+
+      <!-- Tabela Acessível -->
+      <div class="table-responsive">
+        <table class="data-table" id="tabelaLembretes">
+          <thead>
+            <tr>
+              <th scope="col">Medicamento</th>
+              <th scope="col">Dia da Semana</th>
+              <th scope="col">Turno (Linha)</th>
+              <th scope="col">Horário</th>
+              <th scope="col">Status</th>
+              <th scope="col">Instruções</th>
+              <th scope="col" class="text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaCorpo">
+            <tr>
+              <td colspan="7" class="loading-cell">
+                <i class="ph-bold ph-spinner spinner"></i> Carregando agendamentos...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Estado vazio quando não houver remédios -->
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <i class="ph-bold ph-pill-slash empty-icon"></i>
+        <h3>Nenhum lembrete cadastrado ainda</h3>
+        <p>Use o formulário acima para agendar o primeiro medicamento na sua caixa inteligente.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO (Grande e legível) -->
+  <div id="modalExcluir" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalExcluirTitulo" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modalExcluirTitulo" class="modal-title">
+          <i class="ph-bold ph-warning-circle text-danger"></i>
+          Confirmar Exclusão
+        </h3>
+      </div>
+      <div class="modal-body">
+        <p class="modal-msg" id="modalExcluirMsg">
+          Tem certeza de que deseja remover este lembrete de medicação?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" id="btnModalCancelar">Não, Manter</button>
+        <button type="button" class="btn btn-danger" id="btnModalConfirmar">Sim, Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rodapé -->
+  <footer class="app-footer">
+    <div class="container footer-content">
+      <p>Caixa de Remédios Inteligente &bull; Matriz 7x4 com Arduino Uno &bull; Interface Projetada para Cuidadores e Idosos</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
